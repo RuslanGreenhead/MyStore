@@ -4,83 +4,99 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <sstream>
+#include <iomanip>
+#include <functional>
 
 
-//---------------------------------------All 'bout products----------------------------------------//
+//---------------------------------------Product architecture----------------------------------------//
 class ProductInfo{
 public:
     explicit ProductInfo(std::string info) : m_info(std::move(info)) {};
     std::string get_info() { return m_info; }
+
 private:
     std::string m_info;
 };
 
 class Product{
 public:
-    explicit Product(ProductInfo product_info) : m_product_info(std::move(product_info)) {};
+    explicit Product(ProductInfo& product_info) : m_product_info(product_info) {};
     virtual std::string get_info() { return m_product_info.get_info(); }
-    virtual double get_cost() = 0;
+    virtual double get_price() = 0;
+
 protected:
-    ProductInfo m_product_info;
+    ProductInfo& m_product_info;
 };
 
 class WeightProduct : public Product{
 public:
-    WeightProduct(ProductInfo product_info, double cost_per_kg) :
-            Product(std::move(product_info)), m_cost_per_kg(cost_per_kg) {};
-    double get_cost() override { return m_cost_per_kg; }
-    std::string get_info() override {return m_product_info.get_info() + " : " + std::to_string(get_cost()); }
+    WeightProduct(ProductInfo& product_info, double cost_per_kg) :
+            Product(product_info), m_price_per_kg(cost_per_kg) {};
+    double get_price() override { return m_price_per_kg; }
+    std::string get_info() override {
+        std::stringstream oss;
+        oss << std::noshowpoint << get_price();
+        return m_product_info.get_info() + " : " + oss.str() + " per kg";
+    }
 
 private:
-    double m_cost_per_kg;
+    double m_price_per_kg;
 };
 
 class AmountProduct : public Product{
 public:
-    AmountProduct(ProductInfo product_info, double cost_per_one) :
-            Product(std::move(product_info)), m_cost_per_one(cost_per_one) {};
-    double get_cost() override { return m_cost_per_one; }
-    std::string get_info() override {return m_product_info.get_info() + " : " + std::to_string(get_cost()); }
+    AmountProduct(ProductInfo& product_info, double cost_per_one) :
+            Product(product_info), m_price_per_one(cost_per_one) {};
+    double get_price() override { return m_price_per_one; }
+    std::string get_info() override {
+        std::stringstream oss;
+        oss << std::noshowpoint << get_price();
+        return m_product_info.get_info() + " : " + oss.str() + " per one";
+    }
 
 private:
-    double m_cost_per_one;
+    double m_price_per_one;
 };
 
 
-//-----------------------------------------All 'bout position--------------------------------------//
+//-----------------------------------------Position architecture--------------------------------------//
 
 class Position{
 public:
-    explicit Position(Product& product) : m_ptr_product(&product){};
+    explicit Position(const Product& product) : m_ptr_product(const_cast<Product *>(&product)){};
     Product* get_ptr_product() { return m_ptr_product; }
     virtual double get_cost() = 0;
-    virtual double get_quantity() = 0;
+    virtual double get_amount() = 0;
+
 protected:
     Product* m_ptr_product;
 };
 
 class AmountPosition : public Position{
 public:
-    AmountPosition(AmountProduct product, size_t amount) :
-            Position(product), m_amount(amount) {};
-    double get_cost() override { return m_ptr_product->get_cost() * m_amount; }
-    double get_quantity() override { return m_amount; }
+    AmountPosition(const Product& product, size_t quantity) :
+            Position(product), m_quantity(quantity) {};
+    double get_cost() override { return m_ptr_product->get_price() * m_quantity; }
+    double get_amount() override { return m_quantity; }
+
 private:
-    size_t m_amount;
+    size_t m_quantity;
 };
 
 class WeightPosition : public Position{
 public:
-    WeightPosition(WeightProduct product, double weight) :
+    WeightPosition(const Product& product, double weight) :
             Position(product), m_weight(weight) {};
-    double get_cost() override { return m_ptr_product->get_cost() * m_weight; }
-    double get_quantity() override { return m_weight; }
+    double get_cost() override { return m_ptr_product->get_price() * m_weight; }
+    double get_amount() override { return m_weight; }
+
 private:
     double m_weight;
 };
 
 
-//-----------------------------------------External classes----------------------------------------//
+//-----------------------------------------Order & Client----------------------------------------//
 
 class Order{
 public:
@@ -102,11 +118,14 @@ public:
         return res;
     }
     void get_info(){
+        if (empty()){
+            std::cout << "Order is empty" << std::endl;
+            return;
+        }
         std::cout << "Info about the order:" << std::endl;
         for(auto el : m_ptr_positions){
-            std::cout << el->get_ptr_product()->get_info() << " : ";
-            std::cout << el->get_ptr_product()->get_cost() << "per unit" << std::endl;
-            std::cout << "\tQuantity: " << el->get_quantity() << std::endl;
+            std::cout << el->get_ptr_product()->get_info() << std::endl;
+            std::cout << "\tAmount: " << el->get_amount() << std::endl;
             std::cout << "\tCost: " << el->get_cost() << std::endl;
         }
     }
@@ -142,9 +161,13 @@ public:
             return true;
         }
     }
+
 private:
     Balance m_balance;
 };
+
+
+//-----------------------------------------Dummy database----------------------------------------//
 
 // << singleton >>
 class PriceBase{
@@ -177,3 +200,10 @@ protected:
         };
     }
 };
+
+
+//-----------------------------------------Utilities----------------------------------------//
+
+/*bool greater_equal(double a, double b, ){
+    return (a - b)
+}*/
