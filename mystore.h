@@ -107,6 +107,13 @@ public:
                 el = ptr_pos;
                 return;
             }
+
+            // Strategy if we will track not same Products but equal:
+            /*
+             if(*(el->get_ptr_product()) == *(ptr_pos->get_ptr_product())){
+                el->m_quantity = ptr_pos->m_quantity;
+             }
+             */
         }
         m_ptr_positions.push_back(ptr_pos);
     }
@@ -122,12 +129,15 @@ public:
             std::cout << "Order is empty" << std::endl;
             return;
         }
+        double total = 0;
         std::cout << "Info about the order:" << std::endl;
         for(auto el : m_ptr_positions){
             std::cout << el->get_ptr_product()->get_info() << std::endl;
             std::cout << "\tAmount: " << el->get_amount() << std::endl;
             std::cout << "\tCost: " << el->get_cost() << std::endl;
+            total += el->get_cost();
         }
+        std::cout << "Total cost: " << total << std::endl;
     }
     bool empty() { return m_ptr_positions.empty(); }
 
