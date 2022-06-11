@@ -114,7 +114,7 @@ class Order{
 public:
     Order() = default;
 
-    void add_position(Position* ptr_pos) {
+    void add_position(std::unique_ptr<Position> ptr_pos) {
 
         // lambda to compare products (I decided to do it by info and not consider the price)
         auto equal_prod = [] (const Product& prod_1, const Product& prod_2){
@@ -122,21 +122,21 @@ public:
         };
 
         // lambda to compare positions (products are equal -> positions are equal)
-        auto equal_pos = [ptr_pos, equal_prod] (Position* ptr_pos_resource){
+        auto equal_pos = [&ptr_pos, equal_prod] (std::unique_ptr<Position>& ptr_pos_resource){
             return equal_prod(*(ptr_pos_resource->get_ptr_product()), *(ptr_pos->get_ptr_product()));
         };
 
-        auto found_pos = std::find_if(m_ptr_positions.begin(), m_ptr_positions.end(), equal_pos);
+        auto found_pos = std::find_if(m_ptr_positions.begin(), m_ptr_positions.end(), std::move(equal_pos));
         if(found_pos != m_ptr_positions.end()){
-            *found_pos = ptr_pos;
+            *found_pos = std::move(ptr_pos);
             return;
         }
-        m_ptr_positions.push_back(ptr_pos);
+        m_ptr_positions.push_back(std::move(ptr_pos));
     }
 
     double get_cost(){
         double res = 0;
-        for (auto el : m_ptr_positions){
+        for (auto& el : m_ptr_positions){
             res += el->get_cost();
         }
         return res;
@@ -148,7 +148,7 @@ public:
             return;
         }
         std::cout << "Info about the order:" << std::endl;
-        for(auto el : m_ptr_positions){
+        for(auto& el : m_ptr_positions){
             std::cout << el->get_ptr_product()->get_info() << std::endl;
             std::cout << "\tAmount: " << el->get_amount() << std::endl;
             std::cout << "\tCost: " << el->get_cost() << std::endl;
@@ -159,7 +159,7 @@ public:
     bool empty() { return m_ptr_positions.empty(); }
 
 private:
-    std::vector<Position*> m_ptr_positions;
+    std::vector<std::unique_ptr<Position>> m_ptr_positions;
     void clear() { m_ptr_positions.clear(); }
     friend class Client;
 };

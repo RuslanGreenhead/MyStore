@@ -13,18 +13,18 @@ void test_1(){
     std::cout << std::boolalpha << ord1.empty() << std::endl;
 
     auto pos1 = WeightPosition(std::make_unique<WeightProduct>(base.get_weight_product_price("Apple")), 0.5);
-    ord1.add_position(&pos1);
+    ord1.add_position(std::make_unique<WeightPosition>(std::move(pos1)));
     ord1.get_info();
     std::cout << std::endl;
 
     auto ap1 = base.get_amount_product_price("Pencil");
     auto pos2 = AmountPosition(std::make_unique<AmountProduct>(ap1), 2);
-    ord1.add_position(&pos2);
+    ord1.add_position(std::make_unique<AmountPosition>(std::move(pos2)));
     ord1.get_info();
     std::cout << std::endl;
 
     auto pos3 = WeightPosition(std::make_unique<WeightProduct>(base.get_weight_product_price("Apple")), 3);
-    ord1.add_position(&pos3);
+    ord1.add_position(std::make_unique<WeightPosition>(std::move(pos3)));
     ord1.get_info();
     std::cout << std::endl;
 
