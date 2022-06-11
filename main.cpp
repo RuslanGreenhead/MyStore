@@ -4,8 +4,8 @@
 int main() {
 
     test_1(); // Initial test from technical task
-    test_2(); // Empty order case
-
+    //test_2(); // Empty order case
+    //test_3(); // No rvalue ProductInfo passing to Product
 
     /*ProductInfo info("information bout product");
     AmountProduct prod(ProductInfo("Information shit"), 20);
